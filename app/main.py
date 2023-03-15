@@ -1,7 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 db = SQLAlchemy(app)
 
@@ -15,7 +15,32 @@ class Todo(db.Model):
 @app.route("/")
 def todo_list():
     todo_list = Todo.query.all()
-    return render_template("/Users/LucasG/Desktop/itc_soluciones/todo_list/templates/home.html", todo_list=todo_list)
+    return render_template("home.html", todo_list=todo_list)
+
+
+@app.route("/add", methods=["POST"])
+def add():
+    title = request.form.get("title")
+    new_todo = Todo(title=title, complete=False)
+    db.session.add(new_todo)
+    db.session.commit()
+    return redirect(url_for("home"))
+
+
+@app.route("/update/<int:todo_id>")
+def update(todo_id):
+    todo = Todo.query.filter_by(id=todo_id).first()
+    todo.complete = not todo.complete
+    db.session.commit()
+    return redirect(url_for("home"))
+
+
+@app.route("/delete/<int:todo_id>")
+def delete(todo_id):
+    todo = Todo.query.filter_by(id=todo_id).first()
+    db.session.delete(todo)
+    db.session.commit()
+    return redirect(url_for("home"))
 
 
 with app.app_context():
