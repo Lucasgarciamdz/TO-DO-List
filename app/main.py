@@ -1,9 +1,9 @@
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__, template_folder="/Users/LucasG/Desktop/itc_soluciones/todo_list/template")
-db = SQLAlchemy()
+app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
+db = SQLAlchemy(app)
 
 
 class Todo(db.Model):
@@ -15,8 +15,8 @@ class Todo(db.Model):
 @app.route("/")
 def todo_list():
     todo_list = Todo.query.all()
-    return render_template("home", todo_list=todo_list)
+    return render_template("/Users/LucasG/Desktop/itc_soluciones/todo_list/templates/home.html", todo_list=todo_list)
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+with app.app_context():
+    db.create_all()
