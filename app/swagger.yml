@@ -1,0 +1,42 @@
+openapi: 3.1.0
+info:
+  title: Todo List
+  description: a simple to-do list to keep track of your tasks
+  version: 1.0
+servers:
+  - url: https://127.0.0.1:5000/
+    description: Homepage
+paths:
+  /add:
+    post:
+      summary: Add task
+      description: Add a new task to your to-do list to keep track
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Task added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - tasks
+
+

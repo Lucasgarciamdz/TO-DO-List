@@ -1,7 +1,14 @@
 from flask import Flask, render_template, request, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
+from flasgger import Swagger
+from flasgger.utils import swag_from
 
 app = Flask(__name__, template_folder='../templates')
+swagger_config = {
+    'swagger_ui': True,
+    'swagger_file': 'swagger.yml'
+}
+swagger = Swagger(app, config=swagger_config)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 db = SQLAlchemy(app)
 
@@ -19,6 +26,7 @@ def todo_list():
 
 
 @app.route("/add", methods=["POST"])
+@swag_from("swagger.yml")
 def add():
     task = request.form.get("title")
     new_todo = Todo(task=task, completed=False)
