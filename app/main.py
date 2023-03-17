@@ -1,14 +1,9 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import render_template, request, url_for, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flasgger import Swagger
-from flasgger.utils import swag_from
+import connexion
 
-app = Flask(__name__, template_folder='../templates')
-swagger_config = {
-    'swagger_ui': True,
-    'swagger_file': 'swagger.yml'
-}
-swagger = Swagger(app, config=swagger_config)
+app = connexion.FlaskApp(__name__, specification_dir="./")
+app.add_api("swagger.yml")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 db = SQLAlchemy(app)
 
@@ -20,36 +15,44 @@ class Todo(db.Model):
 
 
 @app.route("/")
-def todo_list():
+def get_todo_list():
     todo_list = Todo.query.all()
     return render_template("home.html", todo_list=todo_list)
 
 
 @app.route("/add", methods=["POST"])
-@swag_from("swagger.yml")
-def add():
-    task = request.form.get("title")
+def add_task():
+    task = request.json.get("task")
+    if not task:
+        return jsonify({"status": "error", "message": "Invalid input"}), 400
     new_todo = Todo(task=task, completed=False)
     db.session.add(new_todo)
     db.session.commit()
-    return redirect(url_for("todo_list"))
+    return jsonify({"status": "success", "message": "Task added successfully"}), 201
 
 
 @app.route("/update/<int:todo_id>")
 def update(todo_id):
     todo = Todo.query.filter_by(id=todo_id).first()
+    if not todo:
+        return jsonify({"status": "error", "message": "Task not found"}), 404
     todo.completed = not todo.completed
     db.session.commit()
-    return redirect(url_for("todo_list"))
+    return redirect(url_for("get_todo_list"))
 
 
 @app.route("/delete/<int:todo_id>")
 def delete(todo_id):
     todo = Todo.query.filter_by(id=todo_id).first()
+    if not todo:
+        return jsonify({"status": "error", "message": "Task not found"}), 404
     db.session.delete(todo)
     db.session.commit()
-    return redirect(url_for("todo_list"))
+    return redirect(url_for("get_todo_list"))
 
 
 with app.app_context():
     db.create_all()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
